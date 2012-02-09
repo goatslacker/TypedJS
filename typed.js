@@ -177,6 +177,31 @@ var TypedJS = {
       console.log("Please define TypedJS.test.");
     }
   },
+  createTestSuite: function (signatures, redefine) {
+    function comp_func(func){
+      var pieces = func.split(".");
+      var curr_obj;
+      for(var i = 0; i < pieces.length; i++){
+        if(i === 0){
+          curr_obj = window[pieces[0]];
+        }
+        else curr_obj = curr_obj[pieces[i]]
+      }
+      curr_obj.name = func;
+      return curr_obj;
+    }
+
+    var suite = [];
+    for(var i = 0; i < signatures.length; i++){
+      var base = JSON.parse(typedjs_parser.parse(signatures[i]));
+      base["func_name"] = base["func"];
+      base["ret"] = base["args"].splice(base["args"].length - 1, 1)[0];
+      if (redefine) TypedJS.redefine(base["func_name"],base["args"],base["ret"]);
+      base["func"] = comp_func(base["func"]);
+      suite.push(base);
+    }
+    return suite;
+  },
   extractTypeSignatures: function (content) {
     var types = [];
     lines = content.split("\n");
@@ -191,37 +216,18 @@ var TypedJS = {
     if(redefine === undefined){
       redefine = false;
     }
-    function comp_func(func){
-      var pieces = func.split(".");
-      var curr_obj;
-      for(var i = 0; i < pieces.length; i++){
-        if(i === 0){
-          curr_obj = window[pieces[0]];
-        }
-        else curr_obj = curr_obj[pieces[i]]
-      }
-      curr_obj.name = func;
-      return curr_obj;
-    }
     var scripts = $('script');
     scripts.each(function(i,el){
       $.get(el.src, function(data){
-
         var types = TypedJS.extractTypeSignatures(data);
 
         if (types.length > 0) {
-          var suite = [];
-          for(var i = 0; i < types.length; i++){
-            var base = JSON.parse(typedjs_parser.parse(types[i]));
-            base["func_name"] = base["func"];
-            base["ret"] = base["args"].splice(base["args"].length - 1, 1)[0];
-            if(redefine) TypedJS.redefine(base["func_name"],base["args"],base["ret"]);
-            base["func"] = comp_func(base["func"]);
-            suite.push(base);
-          }
+          var suite = TypedJS.createTestSuite(types, redefine);
+
           console.log("Running on " + el.src);
           TypedJS.go(suite, redefine);
         }
+
       });
     });
   },
