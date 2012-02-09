@@ -9,10 +9,10 @@ var TypedJS = {
   	    if (o.length === 1) return 'char';
   	  }
   		return type;
-  	} 
+  	}
   	else if (Object.prototype.toString.call(o) === '[object Array]'){
   		return 'array';
-  	} 
+  	}
   	else if (o === null){
   		return 'null';
   	}
@@ -84,7 +84,7 @@ var TypedJS = {
       return false;
     }
     if(exp["or"] != undefined){
-      var tmp = false;      
+      var tmp = false;
       for(i in exp["or"]){
         tmp = tmp || TypedJS.check_type(obj, exp["or"][i]);
       }
@@ -140,7 +140,7 @@ var TypedJS = {
           fail_count = fail_count + 1;
         }
       }
-    return fail_count;  
+    return fail_count;
   },
   go:function(testcases,redefine){
     var fail_count = 0;
@@ -207,9 +207,9 @@ var TypedJS = {
   // Checking types at runtime
   redefine:function(f_name, arg_types, ret_type){
     function wrap(f){
-      return function(){      
+      return function(){
         try{
-          if(arg_types != undefined){                    
+          if(arg_types != undefined){
             for(i in arguments){
               if(!TypedJS.check_type(arguments[i],arg_types[i])){
                 throw "Type Error: Expected " + arg_types[i] + " but given " + JSON.stringify(arguments[i]);
