@@ -1,24 +1,39 @@
+function isArray(arr) {
+  if (typeof Array.isArray === 'function') {
+    return Array.isArray(arr);
+  } else {
+    return Object.prototype.toString.call(arr) === '[object Array]';
+  }
+}
+
 var TypedJS = {
   possible:"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789`1234567890-=~!@#$%^&*()_+[]\{}|;':\",./<>?",
   test_cases:200,
   random_array_max_length:10,
-  typeOf:function(o){
+  typeOf: function (o) {
   	var type = typeof o;
-  	if (type !== 'object'){
-//  	  if(type === 'string'){
-//  	    if (o.length === 1) return 'char';
-//  	  }
-  		return type;
-  	}
-  	else if (Object.prototype.toString.call(o) === '[object Array]'){
-  		return 'array';
-  	}
-  	else if (o === null){
-  		return 'null';
-  	}
-  	else {
-  		return 'object';
-  	}
+
+    if (type === 'object') {
+      if (isArray(o)) {
+        return 'array';
+      } else if (o === null) {
+        return 'null';
+      } else if (Object.prototype.toString.call(o) === '[object RegExp]') {
+        return 'regexp';
+      } else if (Object.prototype.toString.call(o) === '[object Date]') {
+        return 'date';
+      } else {
+        return type;
+      }
+    } else if (type === 'number') {
+      if (isNaN(o)) {
+        return 'nan';
+      } else {
+        return type;
+      }
+    } else {
+      return type;
+    }
   },
   gen_string:function(len){
       var text = "";
