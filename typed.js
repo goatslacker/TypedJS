@@ -177,6 +177,16 @@ var TypedJS = {
       console.log("Please define TypedJS.test.");
     }
   },
+  extractTypeSignatures: function (content) {
+    var types = [];
+    lines = content.split("\n");
+    for (var i = 0; i < lines.length; i++) {
+      if (lines[i].replace(" ",'').replace(' ','').indexOf("//+") == 0) {
+        types.push(lines[i]);
+      }
+    }
+    return types;
+  },
   run_tests:function(redefine){
     if(redefine === undefined){
       redefine = false;
@@ -196,14 +206,10 @@ var TypedJS = {
     var scripts = $('script');
     scripts.each(function(i,el){
       $.get(el.src, function(data){
-        var types = [];
-        lines = data.split("\n");
-        for(var i = 0; i < lines.length; i++){
-          if(lines[i].replace(" ",'').replace(' ','').indexOf("//+") == 0){
-            types.push(lines[i]);
-          }
-        }
-        if(types.length > 0){
+
+        var types = TypedJS.extractTypeSignatures(data);
+
+        if (types.length > 0) {
           var suite = [];
           for(var i = 0; i < types.length; i++){
             var base = JSON.parse(typedjs_parser.parse(types[i]));
@@ -271,5 +277,6 @@ var TypedJS = {
   }
 }
 
-
-
+if (typeof module !== 'undefined') {
+  module.exports = TypedJS;
+}
