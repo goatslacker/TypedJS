@@ -5,9 +5,9 @@ var TypedJS = {
   typeOf:function(o){
   	var type = typeof o;
   	if (type !== 'object'){
-  	  if(type === 'string'){
-  	    if (o.length === 1) return 'char';
-  	  }
+//  	  if(type === 'string'){
+//  	    if (o.length === 1) return 'char';
+//  	  }
   		return type;
   	}
   	else if (Object.prototype.toString.call(o) === '[object Array]'){
@@ -41,8 +41,8 @@ var TypedJS = {
             return true;
           else
             return false;
-        case "char":
-          return TypedJS.gen_char();
+//        case "char":
+//          return TypedJS.gen_char();
         default:
           return obj;
       }
@@ -136,7 +136,7 @@ var TypedJS = {
           }
         }
         catch(e){
-          console.log(e);
+          console.log(e.message);
           fail_count = fail_count + 1;
         }
       }
