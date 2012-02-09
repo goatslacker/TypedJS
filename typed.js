@@ -171,7 +171,7 @@ var TypedJS = {
         }
       }
       console.log("Ran " + total_cases + " cases. Failed " + fail_count + ".");
-      console.log("Functions which failed >1 test case: " + JSON.stringify(func_fail));
+      (fail_count > 1) && console.log("Functions which failed >1 test case: " + JSON.stringify(func_fail));
     }
     else{
       console.log("Please define TypedJS.test.");
@@ -181,8 +181,8 @@ var TypedJS = {
     function comp_func(func){
       var pieces = func.split(".");
       var curr_obj;
-      for(var i = 0; i < pieces.length; i++){
-        if(i === 0){
+      for (var i = 0; i < pieces.length; i++) {
+        if (i === 0) {
           curr_obj = window[pieces[0]];
         }
         else curr_obj = curr_obj[pieces[i]]
@@ -212,6 +212,16 @@ var TypedJS = {
     }
     return types;
   },
+  parseFile: function (fileName, fileData, redefine) {
+    var types = TypedJS.extractTypeSignatures(fileData);
+
+    if (types.length > 0) {
+      var suite = TypedJS.createTestSuite(types, redefine);
+
+      console.log("Running on " + fileName);
+      TypedJS.go(suite, redefine);
+    }
+  },
   run_tests:function(redefine){
     if(redefine === undefined){
       redefine = false;
@@ -219,15 +229,7 @@ var TypedJS = {
     var scripts = $('script');
     scripts.each(function(i,el){
       $.get(el.src, function(data){
-        var types = TypedJS.extractTypeSignatures(data);
-
-        if (types.length > 0) {
-          var suite = TypedJS.createTestSuite(types, redefine);
-
-          console.log("Running on " + el.src);
-          TypedJS.go(suite, redefine);
-        }
-
+        TypedJS.parseFile(el.src, data, redefine);
       });
     });
   },
@@ -284,5 +286,11 @@ var TypedJS = {
 }
 
 if (typeof module !== 'undefined') {
-  module.exports = TypedJS;
+  module.exports = {
+    run_tests: function (fileName, data, redefined) {
+//      var fs = require('fs');
+//      var data = fs.readFileSync(fileName, 'utf-8');
+      return TypedJS.parseFile(fileName, data, redefined);
+    }
+  }
 }
