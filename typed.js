@@ -1,24 +1,39 @@
+function isArray(arr) {
+  if (typeof Array.isArray === 'function') {
+    return Array.isArray(arr);
+  } else {
+    return Object.prototype.toString.call(arr) === '[object Array]';
+  }
+}
+
 var TypedJS = {
   possible:"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789`1234567890-=~!@#$%^&*()_+[]\{}|;':\",./<>?",
   test_cases:200,
   random_array_max_length:10,
-  typeOf:function(o){
+  typeOf: function (o) {
   	var type = typeof o;
-  	if (type !== 'object'){
-  	  if(type === 'string'){
-  	    if (o.length === 1) return 'char';
-  	  }
-  		return type;
-  	} 
-  	else if (Object.prototype.toString.call(o) === '[object Array]'){
-  		return 'array';
-  	} 
-  	else if (o === null){
-  		return 'null';
-  	}
-  	else {
-  		return 'object';
-  	}
+
+    if (type === 'object') {
+      if (isArray(o)) {
+        return 'array';
+      } else if (o === null) {
+        return 'null';
+      } else if (Object.prototype.toString.call(o) === '[object RegExp]') {
+        return 'regexp';
+      } else if (Object.prototype.toString.call(o) === '[object Date]') {
+        return 'date';
+      } else {
+        return type;
+      }
+    } else if (type === 'number') {
+      if (isNaN(o)) {
+        return 'nan';
+      } else {
+        return type;
+      }
+    } else {
+      return type;
+    }
   },
   gen_string:function(len){
       var text = "";
@@ -41,8 +56,8 @@ var TypedJS = {
             return true;
           else
             return false;
-        case "char":
-          return TypedJS.gen_char();
+//        case "char":
+//          return TypedJS.gen_char();
         default:
           return obj;
       }
@@ -84,7 +99,7 @@ var TypedJS = {
       return false;
     }
     if(exp["or"] != undefined){
-      var tmp = false;      
+      var tmp = false;
       for(i in exp["or"]){
         tmp = tmp || TypedJS.check_type(obj, exp["or"][i]);
       }
@@ -136,11 +151,11 @@ var TypedJS = {
           }
         }
         catch(e){
-          console.log(e);
+          console.log(e.message);
           fail_count = fail_count + 1;
         }
       }
-    return fail_count;  
+    return fail_count;
   },
   go:function(testcases,redefine){
     var fail_count = 0;
@@ -156,21 +171,22 @@ var TypedJS = {
         }
       }
       console.log("Ran " + total_cases + " cases. Failed " + fail_count + ".");
-      console.log("Functions which failed >1 test case: " + JSON.stringify(func_fail));
+      (fail_count > 1) && console.log("Functions which failed >1 test case: " + JSON.stringify(func_fail));
     }
     else{
       console.log("Please define TypedJS.test.");
     }
   },
-  run_tests:function(redefine){
-    if(redefine === undefined){
-      redefine = false;
+  addTest: function (signature, fn, redefine) {
+    if (signature.indexOf('//+') === -1) {
+      signature = '//+' + signature;
     }
+
     function comp_func(func){
       var pieces = func.split(".");
       var curr_obj;
-      for(var i = 0; i < pieces.length; i++){
-        if(i === 0){
+      for (var i = 0; i < pieces.length; i++) {
+        if (i === 0) {
           curr_obj = window[pieces[0]];
         }
         else curr_obj = curr_obj[pieces[i]]
@@ -178,38 +194,59 @@ var TypedJS = {
       curr_obj.name = func;
       return curr_obj;
     }
+
+    var base = JSON.parse(typedjs_parser.parse(signature));
+    base["func_name"] = base["func"];
+    base["ret"] = base["args"].splice(base["args"].length - 1, 1)[0];
+    if (redefine) TypedJS.redefine(base["func_name"],base["args"],base["ret"]);
+    base["func"] = fn || comp_func(base["func"]);
+    return base;
+  },
+  createTestSuite: function (signatures, redefine) {
+    var suite = [];
+    for(var i = 0; i < signatures.length; i++){
+      var base = this.addTest(signatures[i], null, redefine);
+      suite.push(base);
+    }
+    return suite;
+  },
+  extractTypeSignatures: function (content) {
+    var types = [];
+    lines = content.split("\n");
+    for (var i = 0; i < lines.length; i++) {
+      if (lines[i].replace(" ",'').replace(' ','').indexOf("//+") == 0) {
+        types.push(lines[i]);
+      }
+    }
+    return types;
+  },
+  parseFile: function (fileName, fileData, redefine) {
+    var types = TypedJS.extractTypeSignatures(fileData);
+
+    if (types.length > 0) {
+      var suite = TypedJS.createTestSuite(types, redefine);
+
+      console.log("Running on " + fileName);
+      TypedJS.go(suite, redefine);
+    }
+  },
+  run_tests:function(redefine){
+    if(redefine === undefined){
+      redefine = false;
+    }
     var scripts = $('script');
     scripts.each(function(i,el){
       $.get(el.src, function(data){
-        var types = [];
-        lines = data.split("\n");
-        for(var i = 0; i < lines.length; i++){
-          if(lines[i].replace(" ",'').replace(' ','').indexOf("//+") == 0){
-            types.push(lines[i]);
-          }
-        }
-        if(types.length > 0){
-          var suite = [];
-          for(var i = 0; i < types.length; i++){
-            var base = JSON.parse(typedjs_parser.parse(types[i]));
-            base["func_name"] = base["func"];
-            base["ret"] = base["args"].splice(base["args"].length - 1, 1)[0];
-            if(redefine) TypedJS.redefine(base["func_name"],base["args"],base["ret"]);
-            base["func"] = comp_func(base["func"]);
-            suite.push(base);
-          }
-          console.log("Running on " + el.src);
-          TypedJS.go(suite, redefine);
-        }
+        TypedJS.parseFile(el.src, data, redefine);
       });
     });
   },
   // Checking types at runtime
   redefine:function(f_name, arg_types, ret_type){
     function wrap(f){
-      return function(){      
+      return function(){
         try{
-          if(arg_types != undefined){                    
+          if(arg_types != undefined){
             for(i in arguments){
               if(!TypedJS.check_type(arguments[i],arg_types[i])){
                 throw "Type Error: Expected " + arg_types[i] + " but given " + JSON.stringify(arguments[i]);
@@ -256,5 +293,12 @@ var TypedJS = {
   }
 }
 
+if (typeof module !== 'undefined') {
+  module.exports = TypedJS;
 
-
+/*
+    run_tests: function (fileName, data, redefined) {
+      return TypedJS.parseFile(fileName, data, redefined);
+    }
+*/
+}
