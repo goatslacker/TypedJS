@@ -13,6 +13,6 @@ var testjs = require('./examples/test.js');
 
 //TypedJS.run_tests('test.js', data);
 
-var test = TypedJS.addTest('//+ join_char :: String -> String -> String', testjs);
+var test = TypedJS.addTest('join_char :: String -> String -> String', testjs);
 TypedJS.go([test]);
 //console.log(test);

@@ -178,6 +178,10 @@ var TypedJS = {
     }
   },
   addTest: function (signature, fn, redefine) {
+    if (signature.indexOf('//+') === -1) {
+      signature = '//+' + signature;
+    }
+
     function comp_func(func){
       var pieces = func.split(".");
       var curr_obj;
