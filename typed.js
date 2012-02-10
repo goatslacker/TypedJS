@@ -177,7 +177,7 @@ var TypedJS = {
       console.log("Please define TypedJS.test.");
     }
   },
-  createTestSuite: function (signatures, redefine) {
+  addTest: function (signature, fn, redefine) {
     function comp_func(func){
       var pieces = func.split(".");
       var curr_obj;
@@ -191,13 +191,17 @@ var TypedJS = {
       return curr_obj;
     }
 
+    var base = JSON.parse(typedjs_parser.parse(signature));
+    base["func_name"] = base["func"];
+    base["ret"] = base["args"].splice(base["args"].length - 1, 1)[0];
+    if (redefine) TypedJS.redefine(base["func_name"],base["args"],base["ret"]);
+    base["func"] = fn || comp_func(base["func"]);
+    return base;
+  },
+  createTestSuite: function (signatures, redefine) {
     var suite = [];
     for(var i = 0; i < signatures.length; i++){
-      var base = JSON.parse(typedjs_parser.parse(signatures[i]));
-      base["func_name"] = base["func"];
-      base["ret"] = base["args"].splice(base["args"].length - 1, 1)[0];
-      if (redefine) TypedJS.redefine(base["func_name"],base["args"],base["ret"]);
-      base["func"] = comp_func(base["func"]);
+      var base = this.addTest(signatures[i], null, redefine);
       suite.push(base);
     }
     return suite;
@@ -286,11 +290,11 @@ var TypedJS = {
 }
 
 if (typeof module !== 'undefined') {
-  module.exports = {
+  module.exports = TypedJS;
+
+/*
     run_tests: function (fileName, data, redefined) {
-//      var fs = require('fs');
-//      var data = fs.readFileSync(fileName, 'utf-8');
       return TypedJS.parseFile(fileName, data, redefined);
     }
-  }
+*/
 }

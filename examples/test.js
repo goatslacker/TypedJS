@@ -55,3 +55,7 @@ MyObj = {
     return num1 + num2;
   }
 }
+
+if (typeof module !== 'undefined') {
+  module.exports = join_char;
+}
