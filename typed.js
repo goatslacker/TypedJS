@@ -170,7 +170,7 @@ var TypedJS = {
       TypedJS.log("Functions which failed >1 test case: " + JSON.stringify(func_fail));
     }
     else{
-      TypedJS.log("Please define TypedJS.test.");
+      throw new Error("Please define TypedJS.test.");
     }
     return [func_fail,func_pass];
   },
@@ -184,7 +184,12 @@ var TypedJS = {
     base["ret"] = base["args"].splice(base["args"].length - 1, 1)[0];
     if (redefine) TypedJS.redefine(base["func_name"],base["args"],base["ret"]);
     base["func"] = fn || this.comp_func(base["func"]);
-    return base;
+
+    if (base.func) {
+      return base;
+    } else {
+      return null;
+    }
   },
   run_tests_on_string:function(str,redefine,json){
     var types = [],
@@ -198,7 +203,7 @@ var TypedJS = {
       var suite = [];
       for(var i = 0; i < types.length; i++) {
         var base = this.addTest(types[i], null, redefine);
-        suite.push(base);
+        base && suite.push(base)base && ;
       }
       return TypedJS.go(suite, redefine);
     }
@@ -212,7 +217,9 @@ var TypedJS = {
       }
       else curr_obj = curr_obj[pieces[i]]
     }
-    curr_obj.name = func;
+    if (!curr_obj) {
+      curr_obj.name = func;
+    }
     return curr_obj;
   },
   run_tests:function(redefine){
